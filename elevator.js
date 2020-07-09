@@ -9,61 +9,42 @@
  * Elevator.js
  *********************************************/
 
-var Elevator = function(options) {
-    "use strict";
+class Elevator {
+    constructor(options) {
 
-    // Elements
-    var body = null;
+        // Elements
+        this.body = null;
 
-    // Scroll vars
-    var animation = null;
-    var duration = null; // ms
-    var customDuration = false;
-    var startTime = null;
-    var startPosition = null;
-    var endPosition = 0;
-    var targetElement = null;
-    var verticalPadding = null;
-    var elevating = false;
+        // Scroll vars
+        this.animation = null;
+        this.duration = null; // ms
+        this.customDuration = false;
+        this.startTime = null;
+        this.startPosition = null;
+        this.endPosition = 0;
+        this.targetElement = null;
+        this.verticalPadding = null;
+        this.elevating = false;
 
-    var startCallback;
-    var mainAudio;
-    var endAudio;
-    var endCallback;
+        this.startCallback;
+        this.mainAudio;
+        this.endAudio;
+        this.endCallback;
 
-    var that = this;
+        this.init(options)
+    }
 
     /**
-     * Utils
-     */
-
-    // Thanks Mr Penner - http://robertpenner.com/easing/
-    function easeInOutQuad(t, b, c, d) {
-        t /= d / 2;
-        if (t < 1) return c / 2 * t * t + b;
-        t--;
-        return -c / 2 * (t * (t - 2) - 1) + b;
-    }
-
-    function extendParameters(options, defaults) {
-        for (var option in defaults) {
-            var t =
-                options[option] === undefined && typeof option !== "function";
-            if (t) {
-                options[option] = defaults[option];
-            }
-        }
-        return options;
-    }
-
-    function getVerticalOffset(element) {
-        var verticalOffset = 0;
+    * Utils
+    */
+    getVerticalOffset(element) {
+        const verticalOffset = 0;
         while (element) {
             verticalOffset += element.offsetTop || 0;
             element = element.offsetParent;
         }
 
-        if (verticalPadding) {
+        if (this.verticalPadding) {
             verticalOffset = verticalOffset - verticalPadding;
         }
 
@@ -75,25 +56,25 @@ var Elevator = function(options) {
      */
 
     // Time is passed through requestAnimationFrame, what a world!
-    function animateLoop(time) {
-        if (!startTime) {
-            startTime = time;
+    animateLoop(time) {
+        if (!this.startTime) {
+            this.startTime = time;
         }
 
-        var timeSoFar = time - startTime;
-        var easedPosition = easeInOutQuad(
+        const timeSoFar = time - this.startTime;
+        const easedPosition = easeInOutQuad(
             timeSoFar,
-            startPosition,
-            endPosition - startPosition,
-            duration
+            this.startPosition,
+            this.endPosition - this.startPosition,
+            this.duration
         );
 
         window.scrollTo(0, easedPosition);
 
-        if (timeSoFar < duration) {
-            animation = requestAnimationFrame(animateLoop);
+        if (timeSoFar < this.duration) {
+            this.animation = requestAnimationFrame(this.animateLoop.bind(this));
         } else {
-            animationFinished();
+            this.animationFinished();
         }
     }
 
@@ -110,93 +91,85 @@ var Elevator = function(options) {
     //     C  O  O  O  D
     //     C__O__O__O__D
     //    [_____________]
-    this.elevate = function() {
-        if (elevating) {
+    elevate() {
+        if (this.elevating) {
             return;
         }
 
-        elevating = true;
-        startPosition = document.documentElement.scrollTop || body.scrollTop;
-        updateEndPosition();
+        this.elevating = true;
+        this.startPosition = document.documentElement.scrollTop || body.scrollTop;
+        this.updateEndPosition();
 
         // No custom duration set, so we travel at pixels per millisecond. (0.75px per ms)
-        if (!customDuration) {
-            duration = Math.abs(endPosition - startPosition) * 1.5;
+        if (!this.customDuration) {
+            this.duration = Math.abs(this.endPosition - this.startPosition) * 1.5;
         }
 
-        requestAnimationFrame(animateLoop);
+        requestAnimationFrame(this.animateLoop.bind(this));
 
         // Start music!
-        if (mainAudio) {
-            mainAudio.play();
+        if (this.mainAudio) {
+            this.mainAudio.play();
         }
 
-        if (startCallback) {
-            startCallback();
+        if (this.startCallback) {
+            this.startCallback();
         }
     };
 
-    function browserMeetsRequirements() {
-        return (
-            window.requestAnimationFrame &&
-            window.Audio &&
-            window.addEventListener
-        );
+    resetPositions() {
+        this.startTime = null;
+        this.startPosition = null;
+        this.elevating = false;
     }
 
-    function resetPositions() {
-        startTime = null;
-        startPosition = null;
-        elevating = false;
-    }
-
-    function updateEndPosition() {
-        if (targetElement) {
-            endPosition = getVerticalOffset(targetElement);
+    updateEndPosition() {
+        if (this.targetElement) {
+            this.endPosition = this.getVerticalOffset(targetElement);
         }
     }
 
-    function animationFinished() {
-        resetPositions();
+    animationFinished() {
+        this.resetPositions();
 
         // Stop music!
-        if (mainAudio) {
-            mainAudio.pause();
-            mainAudio.currentTime = 0;
+        if (this.mainAudio) {
+            this.mainAudio.pause();
+            this.mainAudio.currentTime = 0;
         }
 
-        if (endAudio) {
-            endAudio.play();
+        if (this.endAudio) {
+            this.endAudio.play();
         }
 
-        if (endCallback) {
-            endCallback();
+        if (this.endCallback) {
+            this.endCallback();
         }
     }
 
-    function onWindowBlur() {
+    onWindowBlur() {
         // If animating, go straight to the top. And play no more music.
-        if (elevating) {
-            cancelAnimationFrame(animation);
-            resetPositions();
+        if (this.elevating) {
+            this.cancelAnimationFrame(animation);
+            this.resetPositions();
 
-            if (mainAudio) {
-                mainAudio.pause();
-                mainAudio.currentTime = 0;
+            if (this.mainAudio) {
+                this.mainAudio.pause();
+                this.mainAudio.currentTime = 0;
             }
 
-            updateEndPosition();
-            window.scrollTo(0, endPosition);
+            this.updateEndPosition();
+            window.scrollTo(0, this.endPosition);
         }
     }
 
-    function bindElevateToElement(element) {
+    bindElevateToElement(element) {
         if (element.addEventListener) {
-            element.addEventListener("click", that.elevate, false);
+            element.addEventListener("click", this.elevate.bind(this), false);
         } else {
             // Older browsers
             element.attachEvent("onclick", function() {
-                updateEndPosition();
+                this.updateEndPosition();
                 document.documentElement.scrollTop = endPosition;
                 document.body.scrollTop = endPosition;
                 window.scroll(0, endPosition);
@@ -204,16 +177,16 @@ var Elevator = function(options) {
         }
     }
 
-    function init(_options) {
+    init(_options) {
 		// Take the stairs instead
 		if (!browserMeetsRequirements()) {
 			return;
 		}
 
         // Bind to element click event.
-        body = document.body;
+        this.body = document.body;
 
-        var defaults = {
+        const defaults = {
             duration: undefined,
             mainAudio: false,
             endAudio: false,
@@ -226,46 +199,74 @@ var Elevator = function(options) {
         _options = extendParameters(_options, defaults);
 
         if (_options.element) {
-            bindElevateToElement(_options.element);
+            this.bindElevateToElement(_options.element);
         }
 
         if (_options.duration) {
-            customDuration = true;
-            duration = _options.duration;
+            this.customDuration = true;
+            this.duration = _options.duration;
         }
 
         if (_options.targetElement) {
-            targetElement = _options.targetElement;
+            this.targetElement = _options.targetElement;
         }
 
         if (_options.verticalPadding) {
-            verticalPadding = _options.verticalPadding;
+            this.verticalPadding = _options.verticalPadding;
         }
 
-        window.addEventListener("blur", onWindowBlur, false);
+        window.addEventListener("blur", this.onWindowBlur.bind(this), false);
 
         if (_options.mainAudio) {
-            mainAudio = new Audio(_options.mainAudio);
-            mainAudio.setAttribute("preload", _options.preloadAudio);
-            mainAudio.setAttribute("loop", _options.loopAudio);
+            this.mainAudio = new Audio(_options.mainAudio);
+            this.mainAudio.setAttribute("preload", _options.preloadAudio);
+            this.mainAudio.setAttribute("loop", _options.loopAudio);
         }
 
         if (_options.endAudio) {
-            endAudio = new Audio(_options.endAudio);
-            endAudio.setAttribute("preload", "true");
+            this.endAudio = new Audio(_options.endAudio);
+            this.endAudio.setAttribute("preload", "true");
         }
 
         if (_options.endCallback) {
-            endCallback = _options.endCallback;
+            this.endCallback = _options.endCallback;
         }
 
         if (_options.startCallback) {
-            startCallback = _options.startCallback;
+            this.startCallback = _options.startCallback;
         }
     }
-
-    init(options);
 };
+
+/**
+* Utils
+*/
+
+// Thanks Mr Penner - http://robertpenner.com/easing/
+function easeInOutQuad(t, b, c, d) {
+    t /= d / 2;
+    if (t < 1) return c / 2 * t * t + b;
+    t--;
+    return -c / 2 * (t * (t - 2) - 1) + b;
+}
+
+function extendParameters(options, defaults) {
+    for (const option in defaults) {
+        const t = options[option] === undefined && typeof option !== "function";
+        if (t) {
+            options[option] = defaults[option];
+        }
+    }
+    return options;
+}
+
+function browserMeetsRequirements() {
+    return (
+        window.requestAnimationFrame &&
+        window.Audio &&
+        window.addEventListener
+    );
+}
 
 if (typeof module !== "undefined" && module.exports) {
     module.exports = Elevator;
